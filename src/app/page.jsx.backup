@@ -1,0 +1,255 @@
+'use client';
+
+import { useState } from 'react';
+import axios from 'axios';
+import TemplateUploader from '../components/TemplateUploader';
+import PromptEditor from '../components/PromptEditor';
+import JobDescriptionInput from '../components/JobDescriptionInput';
+import SectionPreview from '../components/SectionPreview';
+import LatexEditor from '../components/LatexEditor';
+import PDFViewer from '../components/PDFViewer';
+import StepIndicator from '../components/StepIndicator';
+import LoadingSpinner from '../components/LoadingSpinner';
+import { mergeSections } from '../utils/templateProcessor';
+
+export default function Home() {
+    console.log("Home component rendering...");
+    const [step, setStep] = useState(1);
+    const [baseTemplate, setBaseTemplate] = useState('');
+    const [systemPrompt, setSystemPrompt] = useState('');
+    const [jobDescription, setJobDescription] = useState('');
+    const [generatedSections, setGeneratedSections] = useState(null);
+    const [finalLatex, setFinalLatex] = useState('');
+    const [pdfUrl, setPdfUrl] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [loadingMessage, setLoadingMessage] = useState('Loading...');
+    const [error, setError] = useState(null);
+
+    const handleTemplateReady = (template) => {
+        setBaseTemplate(template);
+        setStep(2);
+        window.scrollTo(0, 0);
+    };
+
+    const handleGenerateSections = async () => {
+        setLoading(true);
+        setLoadingMessage('Analyzing job description and generating tailored sections...');
+        setError(null);
+
+        try {
+            const response = await axios.post('/api/generate-sections', {
+                systemPrompt,
+                jobDescription
+            });
+
+            if (response.data.success) {
+                setGeneratedSections(response.data.sections);
+                setStep(3);
+                window.scrollTo(0, 0);
+            } else {
+                throw new Error(response.data.error || 'Generation failed');
+            }
+        } catch (err) {
+            console.error(err);
+            setError(err.response?.data?.error || err.message || 'Failed to generate sections. Please check your API key.');
+        }
+
+        setLoading(false);
+    };
+
+    const handleSectionsUpdate = (updatedSections) => {
+        setGeneratedSections(updatedSections);
+    };
+
+    const handleMergeAndPreview = () => {
+        try {
+            const merged = mergeSections(baseTemplate, generatedSections);
+            setFinalLatex(merged);
+            setStep(4);
+            window.scrollTo(0, 0);
+        } catch (e) {
+            setError("Error merging sections: " + e.message);
+        }
+    };
+
+    const handleCompilePDF = async () => {
+        setLoading(true);
+        setLoadingMessage('Compiling LaTeX to PDF. This may take up to 30 seconds...');
+        setError(null);
+
+        try {
+            const response = await axios.post(
+                '/api/compile-pdf',
+                { latex: finalLatex }
+            );
+
+            if (response.data.success) {
+                // Base64 to Blob URL
+                const byteCharacters = atob(response.data.pdf);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+
+                setPdfUrl(url);
+                setStep(5);
+                window.scrollTo(0, 0);
+            } else {
+                throw new Error(response.data.error || 'Compilation failed');
+            }
+
+        } catch (err) {
+            console.error(err);
+            //   setError(err.response?.data?.error || 'Failed to compile PDF. Ensure LaTeX syntax is correct.');
+            setError(err.response?.data?.details || err.message || 'Failed to compile PDF. Ensure LaTeX syntax is correct.');
+        }
+
+        setLoading(false);
+    };
+
+    return (
+        <div className="min-h-screen bg-gray-50 font-sans">
+            <header className="bg-white shadow-sm sticky top-0 z-50">
+                <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+                            RESUME<span className="text-primary">AUTOMATION</span>
+                        </h1>
+                        <p className="text-xs text-gray-500 font-medium">MARKER-BASED SYSTEM</p>
+                    </div>
+                    <div className="text-xs text-gray-400 font-mono">
+                        v2.0.0
+                    </div>
+                </div>
+            </header>
+
+            <main className="max-w-7xl mx-auto px-4 py-8 pb-32">
+                <StepIndicator currentStep={step} />
+
+                {error && (
+                    <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-lg shadow-sm flex items-start gap-3 animated fadeIn">
+                        <span className="text-red-500 text-xl">⚠️</span>
+                        <div>
+                            <p className="text-red-800 font-bold">Something went wrong</p>
+                            <p className="text-red-700 text-sm mt-1 whitespace-pre-wrap font-mono bg-red-100 p-2 rounded">{error}</p>
+                        </div>
+                    </div>
+                )}
+
+                {loading && <LoadingSpinner message={loadingMessage} />}
+
+                <div className={`transition-opacity duration-300 ${loading ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
+                    {step === 1 && (
+                        <TemplateUploader onTemplateReady={handleTemplateReady} />
+                    )}
+
+                    {step === 2 && (
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <div className="lg:col-span-1 space-y-6">
+                                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                                    <h3 className="font-bold text-gray-900 mb-4">Configuration</h3>
+                                    <PromptEditor
+                                        initialPrompt={systemPrompt}
+                                        onPromptChange={setSystemPrompt}
+                                    />
+                                </div>
+                                <button
+                                    onClick={() => setStep(1)}
+                                    className="w-full px-6 py-3 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 font-medium transition"
+                                >
+                                    ← Change Template
+                                </button>
+                            </div>
+
+                            <div className="lg:col-span-2 space-y-6">
+                                <JobDescriptionInput
+                                    value={jobDescription}
+                                    onChange={setJobDescription}
+                                />
+
+                                <button
+                                    onClick={handleGenerateSections}
+                                    disabled={!jobDescription}
+                                    className="w-full bg-primary hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-bold text-lg shadow-md transition disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                >
+                                    <span>⚡</span> Generate Tailored Sections
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {step === 3 && (
+                        <div>
+                            <SectionPreview
+                                sections={generatedSections}
+                                onSectionsUpdate={handleSectionsUpdate}
+                            />
+                            <div className="flex flex-col-reverse md:flex-row gap-4 mt-8 pt-6 border-t border-gray-200">
+                                <button
+                                    onClick={() => setStep(2)}
+                                    className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition text-gray-600"
+                                >
+                                    ← Edit JD / Prompt
+                                </button>
+                                <div className="flex-1"></div>
+                                <button
+                                    onClick={handleMergeAndPreview}
+                                    className="bg-primary hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-bold shadow-md transition flex items-center justify-center gap-2"
+                                >
+                                    Merge & Edit Full LaTeX →
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {step === 4 && (
+                        <div>
+                            <LatexEditor
+                                initialLatex={finalLatex}
+                                onLatexUpdate={setFinalLatex}
+                            />
+                            <div className="flex flex-col-reverse md:flex-row gap-4 mt-8 pt-6 border-t border-gray-200">
+                                <button
+                                    onClick={() => setStep(3)}
+                                    className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition text-gray-600"
+                                >
+                                    ← Back to Sections
+                                </button>
+                                <div className="flex-1"></div>
+                                <button
+                                    onClick={handleCompilePDF}
+                                    className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-bold shadow-md transition flex items-center justify-center gap-2 text-lg"
+                                >
+                                    🚀 Compile PDF
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {step === 5 && (
+                        <div>
+                            <PDFViewer pdfUrl={pdfUrl} />
+                            <div className="flex flex-col md:flex-row gap-4 mt-8 pt-6 border-t border-gray-200 justify-center">
+                                <button
+                                    onClick={() => setStep(2)}
+                                    className="px-8 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition shadow-sm text-gray-700"
+                                >
+                                    ↻ Start Over (New JD)
+                                </button>
+                                <button
+                                    onClick={() => setStep(4)}
+                                    className="px-8 py-3 bg-primary text-white border border-transparent rounded-lg hover:bg-blue-700 font-medium transition shadow-sm flex items-center gap-2"
+                                >
+                                    ✏️ Warning found? Fix LaTeX
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </main>
+        </div>
+    );
+}
