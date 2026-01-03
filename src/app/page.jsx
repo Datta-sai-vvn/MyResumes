@@ -162,6 +162,7 @@ export default function Home() {
                     {step === 5 && (
                         <PDFViewer
                             pdfUrl={pdfUrl}
+                            latex={finalLatex}
                             onReset={reset}
                             compilationFailed={compilationFailed}
                         />

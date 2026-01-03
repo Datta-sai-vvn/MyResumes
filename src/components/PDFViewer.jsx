@@ -1,6 +1,48 @@
 'use client';
 
-export default function PDFViewer({ pdfUrl, onReset, compilationFailed }) {
+import { useState } from 'react';
+
+export default function PDFViewer({ pdfUrl, onReset, compilationFailed, latex }) {
+    const [downloading1Page, setDownloading1Page] = useState(false);
+
+    const downloadOnePage = async () => {
+        if (!latex) return;
+        setDownloading1Page(true);
+        try {
+            const res = await fetch('/api/compile-pdf', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ latex, forceOnePage: true })
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                const byteCharacters = atob(data.pdf);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'resume_1page.pdf';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } else {
+                alert('Failed to generate 1-page PDF: ' + (data.error || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Download error:', error);
+            alert('Download failed: ' + error.message);
+        }
+        setDownloading1Page(false);
+    };
     const download = () => {
         if (!pdfUrl) return;
         const a = document.createElement('a');
@@ -26,6 +68,20 @@ export default function PDFViewer({ pdfUrl, onReset, compilationFailed }) {
                             className="px-4 py-2 text-white bg-green-600 hover:bg-green-700 rounded-lg font-medium shadow-sm transition flex items-center gap-2"
                         >
                             <span>⬇️</span> Download PDF
+                        </button>
+                    )}
+                    {!compilationFailed && latex && (
+                        <button
+                            onClick={downloadOnePage}
+                            disabled={downloading1Page}
+                            className="px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 rounded-lg font-medium shadow-sm transition flex items-center gap-2"
+                        >
+                            {downloading1Page ? (
+                                <span className="animate-spin">⏳</span>
+                            ) : (
+                                <span>📄</span>
+                            )}
+                            Download 1-Page
                         </button>
                     )}
                 </div>

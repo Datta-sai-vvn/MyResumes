@@ -3,15 +3,30 @@ import axios from 'axios';
 
 export async function POST(request) {
     try {
-        const { latex } = await request.json();
+        const { latex, forceOnePage } = await request.json();
 
         if (!latex) {
             return NextResponse.json({ error: 'Missing LaTeX content' }, { status: 400 });
         }
 
-        // Simplest, most reliable method for latexonline.cc is often just a direct URL construction
-        // or a simple POST with url-encoded body.
-        // Let's try constructing the URL with the 'text' parameter.
+        let latexToCompile = latex;
+        if (forceOnePage) {
+            // Inject pagesel package to restrict to page 1
+            // We inject it after \documentclass line usually, or just at the top if possible.
+            // LaTeX usually requires packages in preamble.
+            // A safe bet is replacing \documentclass{...} with \documentclass{...}\n\usepackage[1]{pagesel}
+            // Or just prepending it if we assume standard template structure.
+            // Actually, inserting after \documentclass is safer.
+            if (latexToCompile.includes('\\documentclass')) {
+                latexToCompile = latexToCompile.replace(
+                    /(\\documentclass\[.*?\]\{.*?\})/,
+                    "$1\n\\usepackage[1]{pagesel}"
+                );
+            } else {
+                // Fallback
+                latexToCompile = "\\usepackage[1]{pagesel}\n" + latexToCompile;
+            }
+        }
 
         // Note: latexonline.cc takes ?text=... 
 
@@ -19,7 +34,7 @@ export async function POST(request) {
             `https://latexonline.cc/compile`,
             {
                 params: {
-                    text: latex,
+                    text: latexToCompile,
                     force: 'true'
                 },
                 responseType: 'arraybuffer',

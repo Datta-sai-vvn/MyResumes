@@ -11,7 +11,8 @@ Your goal is to OPTIMIZE the user's existing projects with keywords from the Job
   2. EXACTLY FOUR justified lines (Font 10pt, Letterpaper, Width ~17.4cm).
   3. **CRITICAL:** **MAX 330 CHARACTERS TOTAL**. (Approx 82 chars/line).
   4. ABSOLUTELY NO spilling into a 5th line. **Aim for 3.5 lines** to be safe.
-  5. **MANDATORY CONTENT:**
+  5. **NO MARKDOWN:** Do NOT use "**bold**". Use "\\textbf{bold}".
+  6. **MANDATORY CONTENT:**
      - ROLE TITLE: "**Data Engineer and AI/ML Engineer**" (Constant).
      - EXPERIENCE: "**4 years**" (Constant. Do NOT use "2+" or "5+").
 
@@ -26,9 +27,15 @@ Your goal is to OPTIMIZE the user's existing projects with keywords from the Job
   STRICT REQUIREMENTS:
   1. **DENSITY IS KEY:** Use ACTUAL TOOL NAMES (e.g. "XGBoost, BERT, Spark").
   2. **FORMAT:** \\textbf{Category:} Tool1, Tool2, Tool3... \\\\
-  3. **ONE LINE PER CATEGORY.**
-  4. **CRITICAL:** Ends with \\\\ for all lines **EXCEPT THE LAST LINE**. The last line must NOT have \\\\.
-  5. Include 5-6 Categories.
+  3. **CRITICAL LAYOUT RULE:** Output as a **SINGLE COMPACT BLOCK**.
+  4. **DO NOT** put empty lines between categories.
+  5. **DO NOT** use bullet points.
+  6. **NO MARKDOWN:** Use "\\textbf{}" for bolding.
+  7. **Review the LAST LINE:**
+     - It MUST be labelled "\\textbf{Soft Skills:}" (or "Core Competencies" if Soft Skills are weak).
+     - It MUST contain 4-5 high-value terms.
+     - It MUST **NOT** end with "\\\\". (This causes the "extra space" issue).
+  8. Include 6 Categories total.
 
 - Projects: OPTIMIZE these TWO specific projects.
   DO NOT create new projects. Keep these Titles and Tech Stacks.
@@ -64,17 +71,45 @@ Your goal is to OPTIMIZE the user's existing projects with keywords from the Job
   2. Output ONLY the raw LaTeX code.
 
   KEYWORD OPTIMIZATION STRATEGY (CRITICAL):
-  Analyze the provided Job Description to extract and integrate High-Value Keywords.
-  Prioritize specific terms found in the JD following this hierarchy:
-  1. **Hard Skills & Tools:** (e.g., Python, PyTorch, Azure, AWS, Docker, Kubernetes, Spark, Git).
-  2. **Domain Concepts:** (e.g., Generative AI, RAG, LLMs, MLOps, Data Integrity, Scalable Systems, Deep Learning).
-  3. **Methodologies:** (e.g., Agile, CI/CD, SDLC, Model Monitoring).
-  4. **Action Verbs & Soft Skills:** (e.g., Collaborating, Mentoring, Researching, Enhancing).
+  **GOAL: ACHIVE 90%+ MATCH SCORE BY MIRRORING THE JD'S LANGUAGE AND INTENT.**
+  **DO NOT use hardcoded rules. THINK like a Senior Recruiter.**
 
-  **INTEGRATION INSTRUCTION:**
-  - **Summary:** Weave top-tier keywords (Concept + Hard Skill) into the narrative.
-  - **Projects:** Rewrite bullet points to explicitly mention these tools/concepts where relevant to the project's context.
-  - **Skills:** Ensure the skills listed match the JD's specific terminology (e.g., if JD says "Git/GitHub", use that exact phrasing).`);
+  1. **DECODE THE ROLE IDENTITY & DOMAIN:**
+     - **Analyze the JD:** Is this a Robotics role? FinTech? Startup? Corporate?
+     - **ADAPT YOUR TONE:**
+       - *Robotics/Hardware:* Use words like "Telemetry", "Embedded", "Latency", "Sensors", "Lab", "Physical Systems".
+       - *General Data Eng:* Use "Pipelines", "Scalability", "Warehouse", "Governance", "Orchestration".
+       - *MLOps/AI:* Use "Deployment", "Monitoring", "Drift", "Inference", "CI/CD".
+
+  2. **INTELLIGENT GAP BRIDGING (THE "MISSING LINK" LOGIC):**
+     - **Scan for Missing Keywords:** Look for high-priority keywords in the JD that are NOT provided in the Source Skills.
+     - **Bridge the Gap (Creative adaptation):**
+       - *Example:* If JD wants "Lab Teams" and Source has "Project Experience", write: "Collaborated with **cross-functional engineering teams (Lab/Hardware)**..."
+       - *Example:* If JD wants "Polars" but Source has "Pandas", write: "Processed data using modern dataframe libraries (**Polars**/Pandas)..." implies familiarity.
+       - *Example:* If JD wants "React/Web", rephrase "Streamlit" as "Built **custom web-based data visualization tools**..."
+     - **SCALE MISMATCH (The "100B Events" Rule):**
+       - **IF** the JD asks for "Billions of events", "High Throughput", or "Petabyte scale":
+       - **ACTION:** Shift focus from *raw numbers* to *Architectural Scalability*. Use phrases like "**Architected scalable pipelines** for high-throughput data" or "**Optimized distributed processing** for efficiency" instead of citing small dataset sizes.
+     - **DATA RELIABILITY:**
+       - **IF** the JD mentions "Data Quality", "Reliability Engineering", or "Governance":
+       - **ACTION:** Explicitly mention "**implemented automated data quality checks**" and "**reliability monitoring frameworks**" in your ETL projects.
+
+  3. **CROSS-FUNCTIONAL ALIGNMENT:**
+     - **Identify Collaborators:** Does the JD mention "Mechanical Engineers", "Product Managers", "C-Suite", or "Researchers"?
+     - **ACTION:** In *Project 2*, explicitly mention: "Collaborated with **[INSERT JD SPECIFIC ROLES]** to align technical solutions with business goals."
+
+  4. **TERMINOLOGY SWAPPING:**
+     - **Specifics > Generics:** Never use "Communication" if the JD says "Cross-functional Storytelling". Never use "Database" if the JD says "NoSQL/DynamoDB".
+     - **Use JD's Exact Phrasing:** If they say "5 days in-office", mention "Strong preference for on-site collaboration" in Soft Skills.
+
+  **INTEGRATION INSTRUCTIONS:**
+  - **Summary:** Define the candidate's "Identity" to match the JD's opening paragraph (e.g. "AI Engineer with Robotics focus").
+  - **Projects:**
+     - **Project 1:** Highlight "Performance/Scale/Real-time" if the JD emphasizes it.
+     - **Project 2:** Highlight "Collaboration/Process/Integration" if the JD emphasizes it (especially with specific teams like Lab/Hardware).
+  - **Skills:**
+     - **Soft Skills:** MUST be the exact 4-5 text matches from the JD.
+     - **Tech Stack:** Prioritize the intersection of [User Skills] AND [JD Requirement]. Add specific JD tools if close equivalents exist in source.`);
 
     const [showPrompt, setShowPrompt] = useState(false);
 
